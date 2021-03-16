@@ -1,0 +1,284 @@
+#ifndef GRID_DATASET_CLH
+#define GRID_DATASET_CLH
+
+#define OPENCL_NUM_WORK_ITEMS_PER_GROUP @OPENCL_NUM_WORK_ITEMS_PER_GROUP@
+#define OPENCL_NUM_WORK_GROUPS @OPENCL_NUM_WORK_GROUPS@
+
+typedef short4 cell_t;
+typedef int4   cell_pair_t;
+typedef uchar  flag_t;
+typedef float  func_t;
+
+typedef struct
+{
+  cell_t lc;
+  cell_t uc;
+} rect_t;
+
+
+typedef struct
+{
+  rect_t r;
+  rect_t e;
+  rect_t d;
+  rect_t wr;
+} dataset_t;
+
+#define flag_to_uint4(f)          ((uint4){(f),(0),(0),(0)})
+
+__constant cell_t invalid_cell = (cell_t){-1,-1,-1,-1};
+
+inline int4 to_int4(const cell_t c)
+{
+  return (int4){(c).x,(c).y,(c).z,(0)};
+}
+
+inline cell_t to_cell(short x,short y,short z)
+{
+  return (cell_t){x,y,z,0};
+}
+
+#define Xdir (to_cell(1,0,0))
+#define Ydir (to_cell(0,1,0))
+#define Zdir (to_cell(0,0,1))
+
+#define XYdir (to_cell(1,1,0))
+#define YZdir (to_cell(0,1,1))
+#define ZXdir (to_cell(1,0,1))
+
+#define XYZdir (to_cell(1,1,1))
+
+const sampler_t func_sampler  = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
+const sampler_t flag_sampler  = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
+
+inline rect_t make_rect(const cell_t lc, const cell_t uc)
+{
+  rect_t r;
+
+  r.lc = lc;
+  r.uc = uc;
+
+  return r;
+}
+
+inline rect_t make_rect2(const cell_pair_t pr_i)
+{
+  rect_t r;
+
+  short8 pr = as_short8(pr_i);
+
+  r.lc.x = pr.s0;
+  r.lc.y = pr.s1;
+  r.lc.z = pr.s2;
+  r.uc.x = pr.s4;
+  r.uc.y = pr.s5;
+  r.uc.z = pr.s6;
+  return r;
+}
+
+inline dataset_t make_dataset
+(
+  cell_t rct_lc,  cell_t rct_uc,
+  cell_t ext_lc,  cell_t ext_uc,
+  cell_t dom_lc,  cell_t dom_uc  )
+{
+  dataset_t ds;
+
+  ds.r = make_rect(rct_lc,rct_uc);
+  ds.e = make_rect(ext_lc,ext_uc);
+  ds.d = make_rect(dom_lc,dom_uc);
+
+  ds.wr.lc.x = (ds.r.lc.x + ds.e.lc.x)/2;
+  ds.wr.lc.y = (ds.r.lc.y + ds.e.lc.y)/2;
+  ds.wr.lc.z = (ds.r.lc.z + ds.e.lc.z)/2;
+
+  ds.wr.uc.x = (ds.r.uc.x + ds.e.uc.x)/2;
+  ds.wr.uc.y = (ds.r.uc.y + ds.e.uc.y)/2;
+  ds.wr.uc.z = (ds.r.uc.z + ds.e.uc.z)/2;
+
+  return ds;
+}
+
+inline dataset_t make_dataset2
+  (cell_pair_t rct,cell_pair_t ext,cell_pair_t dom)
+{
+  dataset_t ds;
+
+  ds.r = make_rect2(rct);
+  ds.e = make_rect2(ext);
+  ds.d = make_rect2(dom);
+
+  ds.wr.lc.x = (ds.r.lc.x + ds.e.lc.x)/2;
+  ds.wr.lc.y = (ds.r.lc.y + ds.e.lc.y)/2;
+  ds.wr.lc.z = (ds.r.lc.z + ds.e.lc.z)/2;
+
+  ds.wr.uc.x = (ds.r.uc.x + ds.e.uc.x)/2;
+  ds.wr.uc.y = (ds.r.uc.y + ds.e.uc.y)/2;
+  ds.wr.uc.z = (ds.r.uc.z + ds.e.uc.z)/2;
+
+
+  return ds;
+}
+
+inline int c_to_i(const rect_t r, const cell_t c)
+{
+  const int X = r.uc.x - r.lc.x +1;
+  const int Y = r.uc.y - r.lc.y +1;
+
+  const int x = c.x - r.lc.x;
+  const int y = c.y - r.lc.y;
+  const int z = c.z - r.lc.z;
+
+  return (X*Y*z + X*y + x);
+}
+
+inline cell_t i_to_c(const rect_t r, const int i)
+{
+  const short X = r.uc.x - r.lc.x +1;
+  const short Y = r.uc.y - r.lc.y +1;
+
+  return to_cell(r.lc.x + (i%X),r.lc.y + ((i%(X*Y))/X),r.lc.z + (i/(X*Y)));
+}
+
+inline int c_to_i2(const rect_t r, const cell_t c)
+{
+  const int X = (r.uc.x - r.lc.x)/2 +1;
+  const int Y = (r.uc.y - r.lc.y)/2 +1;
+
+  const int x = (c.x - r.lc.x)/2;
+  const int y = (c.y - r.lc.y)/2;
+  const int z = (c.z - r.lc.z)/2;
+
+  return (X*Y*z + X*y + x);
+}
+
+inline cell_t i_to_c2(const rect_t r, const int i)
+{
+  const int X = (r.uc.x - r.lc.x)/2 +1;
+  const int Y = (r.uc.y - r.lc.y)/2 +1;
+
+  return to_cell(r.lc.x + 2*(i%X),r.lc.y + 2*((i%(X*Y))/X),r.lc.z + 2*(i/(X*Y)));
+}
+
+inline int num_cells(const rect_t r)
+{
+  return c_to_i(r,r.uc) + 1;
+}
+
+inline int num_cells2(const rect_t r)
+{
+  return c_to_i2(r,r.uc) + 1;
+}
+
+
+inline bool contains(const rect_t r, const cell_t c)
+{
+  return (r.lc.x <= c.x) && (c.x <= r.uc.x) &&
+      (r.lc.y <= c.y) && (c.y <= r.uc.y) &&
+      (r.lc.z <= c.z) && (c.z <= r.uc.z);
+}
+
+inline int cell_dim(const cell_t c)
+{
+  return (c.x&1) + (c.y&1) + (c.z&1);
+}
+
+inline cell_t flag_to_mxfct(const cell_t c,const flag_t f)
+{
+  short d = ((f&0x07) - 1)/2 ;
+  short r = ((f&0x07) - 1)%2 ;
+
+  short m = r*2-1;
+
+  switch(d)
+  {
+  case 0: c.x += m; break;
+  case 1: c.y += m; break;
+  case 2: c.z += m; break;
+  };
+
+  return c;
+}
+
+inline flag_t mxfct_to_flag(const cell_t c,const cell_t f)
+{
+  short r = (f.x - c.x + 1)/2;
+  short d = 0;
+
+  if(c.y != f.y)
+  {
+    r = (f.y - c.y + 1)/2;
+    d = 1;
+  }
+  else if(c.z != f.z)
+  {
+    r = (f.z - c.z + 1)/2;
+    d = 2;
+
+  }
+
+  return (1 + d*2 + r);
+}
+
+inline cell_t flag_to_pair(cell_t c,flag_t f)
+{
+  return flag_to_mxfct(c,(f>>3)&0x07);
+}
+
+inline flag_t pair_to_flag(cell_t c,cell_t p)
+{
+  return (mxfct_to_flag(c,p)<<3);
+}
+
+inline cell_t second_max_facet(cell_t c,cell_t mf)
+{
+  return c + c - mf;
+}
+
+inline bool __compare_cells(cell_t c1, cell_t c2)
+{
+  if(c1.x != c2.x)
+    return c1.x < c2.x;
+
+  if(c1.y != c2.y)
+    return c1.y < c2.y;
+
+  return c1.z < c2.z;
+}
+
+inline bool is_same_cell(cell_t c1, cell_t c2)
+{
+  return (c1.x == c2.x) && (c1.y == c2.y) && (c1.z == c2.z);
+}
+
+inline int boundryCount(const rect_t r,const cell_t c)
+{
+  return ((c.x == r.lc.x || c.x == r.uc.x)?(1):(0)) +
+         ((c.y == r.lc.y || c.y == r.uc.y)?(1):(0)) +
+         ((c.z == r.lc.z || c.z == r.uc.z)?(1):(0));
+}
+
+inline int is_boundry(const rect_t r,const cell_t c)
+{
+  return (boundryCount(r,c) != 0);
+}
+
+inline bool is_paired (const flag_t f)
+{
+  return (((f>>3) & 0x07) !=0);
+}
+
+enum eCellFlags
+{
+  CELLFLAG_VISITED   = 0x80,
+  CELLFLAG_CRITICAL = 0x40,
+  CELLFLAG_MASK     = 0xc0
+};
+
+inline bool is_critical (const flag_t f)
+{
+  return ((f&CELLFLAG_CRITICAL) != 0);
+}
+
+inline cell_t swiz(cell_t c) {return to_cell(c.y,c.z,c.x);}
+#endif
