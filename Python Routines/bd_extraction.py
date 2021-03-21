@@ -40,7 +40,7 @@ def dist_field_comp(ls):
 
     print('Commencing Distance Field Computation')
 
-    itk_image=itk.GetImageFromArray(np.array(ls).astype(np.float64))
+    itk_image=itk.GetImageFromArray(np.array(ls).astype(np.float32))
 
     antialiasfilter = itk.AntiAliasBinaryImageFilter.New(itk_image)
     antialiasfilter.SetInput(itk_image)

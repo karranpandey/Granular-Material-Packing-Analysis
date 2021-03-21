@@ -106,6 +106,7 @@ def get_extremum_graph(msc,surviving_sads):
     fa = vtk.vtkFloatArray()
     fa.SetName("SaddleVal")
     for s in surviving_sads:
+        s = int(s)
         gm = msc.asc_geom(s)
         for a,b in gm:
             ca.InsertNextCell(2)
@@ -191,7 +192,6 @@ def get_segmentation_index_dual(msc, img):
     #val = vtk.vtkDoubleArray()
     #val.SetName('Distance Val')
     count = 0
-    print('Starting Max Loop')
     for m in cps_max:
         if(msc.cp_func(m)<0):
             continue     
