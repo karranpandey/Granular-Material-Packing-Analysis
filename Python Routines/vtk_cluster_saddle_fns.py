@@ -60,8 +60,6 @@ def compute_contact_regions(msc,image):
     #val = nps.numpy_to_vtk(image)
     #val.SetName('Distance Val')
 
-    print('init process start')
-
     for s in cps_2sad:
         if(msc.cp_func(s) < 0 or len(msc.asc(s))!=2):
             continue

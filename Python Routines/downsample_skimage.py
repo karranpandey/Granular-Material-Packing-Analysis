@@ -32,7 +32,14 @@ print(np.shape(downsampled_img))
 
 downsampled_img=sitk.GetImageFromArray(downsampled_img)
 
+output_path_name='../Outputs/'
+if not os.path.exists(output_path_name):
+    os.makedirs(output_path_name)
+
+base_name=os.path.basename(data_file_name)
+base_name=os.path.splitext(base_name)[0]
+
 raw_writer=sitk.ImageFileWriter()
-raw_writer.SetFileName('../Outputs/angular_downsampled.mhd')
+raw_writer.SetFileName(output_path_name+'downsampled_'+base_name+'.mhd')
 raw_writer.Execute(downsampled_img)
 

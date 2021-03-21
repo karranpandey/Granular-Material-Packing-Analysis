@@ -18,7 +18,10 @@ def display_pcurve(p_diagm):
     plt.show()
     return
         
-def compute_pers_diagm(msc):
+def compute_pers_diagm(data_file_name,dim):
+    msc = pyms3d.mscomplex()
+    msc.compute_bin(data_file_name,dim)
+    msc.simplify_pers(thresh=0.0,is_nrm=True)
     cps_2sad=msc.cps(2)
     cps_max=msc.cps(3)
     cps_fun_vals=msc.cps_func()

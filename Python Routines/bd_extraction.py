@@ -91,6 +91,10 @@ print('Writing File')
 
 raw_writer = sitk.ImageFileWriter()
 output_path_name='../Outputs/'
+
+if not os.path.exists(output_path_name):
+    os.makedirs(output_path_name)
+
 raw_writer.SetFileName(output_path_name+'chamf_distance_'+base_name+'.mhd')
 raw_writer.Execute(dist_image)
 

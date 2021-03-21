@@ -54,25 +54,21 @@ msc_file_name='msc_'+ base_name + '_unsimplified'
 
 #print(pyms3d.get_hw_info())
 
-print("Computing initial morse-smale complex")
-
-msc = pyms3d.mscomplex()
-msc.compute_bin(data_file_name,dim)
-msc.simplify_pers(thresh=0.0,is_nrm=True)
-
-img = read_msc_to_img(msc, dim)
-raw_writer = sitk.ImageFileWriter()
 output_path_name='../Outputs/'
-raw_writer.SetFileName(output_path_name+'msc_image.mhd')
-raw_writer.Execute(sitk.GetImageFromArray(img))
-
+if not os.path.exists(output_path_name):
+    os.makedirs(output_path_name)
 
 while(True):
-    val = input("1. Display Persistence Curve \n 2. Simplify Morse-Smale Complex \n 3. Compute Contact Information \n 4. Compute Segmentation \n 5. Load Stored MSC \n 6. Exit \n")
+    val = input(" 1. Display Persistence Curve \n 2. Compute and Simplify Morse-Smale Complex \n 3. Compute Contact Information \n 4. Compute Segmentation \n 5. Load Stored MSC \n 6. Exit \n")
     val = int(val)
     if(val == 1):
-        compute_pers_diagm(msc)
+        print("Computing Persistence Curve")
+        compute_pers_diagm(data_file_name,dim)
     if(val == 2):
+        print("Computing initial Morse-Smale Complex")
+        msc = pyms3d.mscomplex()
+        msc.compute_bin(data_file_name,dim)
+        img = read_msc_to_img(msc, dim)
         percent_pers = float(input("Enter Persistence Threshold: \n"))
         msc_file_name+='_pers_'+str(percent_pers)
         msc.simplify_pers(thresh=percent_pers,is_nrm=False)
@@ -88,18 +84,19 @@ while(True):
         print('Grain Centres Computed')
         connectivity_network = get_extremum_graph(msc,surv_sads)
         print('Connectivity Network Computed')
-        write_polydata(grain_centres,base_name + 'grain_centres.vtp')
-        write_polydata(contacts,base_name + 'contacts.vtp')
-        write_polydata(des_man,base_name + 'contact_regions.vtp')
-        write_polydata(connectivity_network,base_name + 'connectivity_network.vtp')
+        write_polydata(grain_centres,base_name + '_grain_centres.vtp')
+        write_polydata(contacts,base_name + '_contacts.vtp')
+        write_polydata(des_man,base_name + '_contact_regions.vtp')
+        write_polydata(connectivity_network,base_name + '_connectivity_network.vtp')
     if(val == 4):
+        print("Computing Segmentation")
         #weights = [[[1/8,1/8],[1/8,1/8]],[[1/8,1/8],[1/8,1/8]]]
         #dual_img = convolve(img, weights, mode = 'constant')
         foot_print = [[[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,1,1],[0,1,1]],[[0,0,0],[0,1,1],[0,1,1]]]
         min_img = minimum_filter(img, footprint = foot_print)
         segmentation = get_segmentation_index_dual(msc, min_img)
         print('Segmentation Computed')
-        write_polydata(segmentation, base_name + 'segmentation.vtp')
+        write_polydata(segmentation, base_name + '_segmentation.vtp')
     if(val == 5):
         file_name = input("Enter MSC Path")
         msc=pyms3d.mscomplex()
