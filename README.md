@@ -44,7 +44,7 @@ This will store the computed distance field in MetaImage format (.mhd + .raw) in
 
 This script is a useful downsampling routine if the original CT image doesn't fit in memory for the MS-Complex computation. It takes as input the raw CT image and downsamples it based on the given factor. It takes as input a MetaImage file (.mhd + .raw). To run the script, execute the following command in the terminal: 
 
-`python bd_extraction.py [Path to .mhd file] [factor]` 
+`python downsample_skimage.py [Path to .mhd file] [factor]` 
 
 This will store the downsampled CT image in MetaImage format (.mhd + .raw) in the 'Outputs' folder in the repository.
 
@@ -52,7 +52,7 @@ This will store the downsampled CT image in MetaImage format (.mhd + .raw) in th
 
 This script is the main interface to run the Morse-Smale Complex computation and extract relevant geometric and topological structures for analysis. It takes the computed distance field as input and returns the structures selected from the in-program menu. The program allows for the visualization of the persistence curve, computation/simplification of the MS-Complex and extraction of the segmentation, connectivity network and contact regions in the granular material packing.  
 
-`python bd_extraction.py [Path to .raw file of distance field] [dimension 1] [dimension 2] [dimension 3]` 
+`python main.py [Path to .raw file of distance field] [dimension 1] [dimension 2] [dimension 3]` 
 
 Running this will store the selected structures in '.vtp' format (accessible through VTK/ParaView) in the 'Outputs' folder in the repository.
 
