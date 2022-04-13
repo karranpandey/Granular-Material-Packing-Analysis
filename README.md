@@ -1,8 +1,8 @@
 # Granular-Material-Packing-Analysis
 
-## Description 
+## Description
 
-Repository containing code for a discrete Morse theory based method to analyse 3-D CT scans of granular material packings. 
+Repository containing code for a discrete Morse theory based method to analyse 3-D CT scans of granular material packings.
 
 (e-mail: karran13 [AT] gmail.com)
 
@@ -10,13 +10,14 @@ Repository containing code for a discrete Morse theory based method to analyse 3
 
 ## Requirements
 
-To compile and execute this code, you will need Cmake > 3.1.8, Boost > 1.58, OpenCL 1.1 (implicitly available along with CUDA > 10.1), OpenMP and python with the following packages: 
+To compile and execute this code, you will need Cmake > 3.1.8, Boost > 1.58, OpenCL 1.1 (implicitly available along with CUDA > 10.1), OpenMP and python with the following packages:
 
 1. vtk
 2. scikit-image
 3. SimpleITK
 4. ITK
 5. numpy/scipy
+6. numba
 
 ---
 
@@ -36,7 +37,7 @@ The MS-Complex computation is done using pyms3d. The installation instruction of
 * Clone the repository
 
 ```sh
-git clone https://github.com/karran13/Granular-Material-Packing-Analysis 
+git clone https://github.com/karran13/Granular-Material-Packing-Analysis
 ```
 
 * Navigate to mscomplex-3d, create build and install directories
@@ -54,7 +55,7 @@ cmake-gui
 ```
 
 1. In the cmake-gui, provide the path for
- source code ---> absolute path to mscomplex-3d 
+ source code ---> absolute path to mscomplex-3d
  build directory ---> absolute path to mscomplex-3d/build
 
 2. Press configure to see the default values cmake-gui picked up
@@ -84,27 +85,27 @@ where 8 is number of processes used to build the pyms3d.
 
 The python scripts to run the pipeline can be found in the Python Routines folder. You should have all the python packages specified above to run the pipeline successfully. The scripts and their input formats are described below:
 
-#### bd_extraction.py 
+#### distance_field.py
 
-This script takes as input the raw CT image and outputs the distance field based on the extracted boundary. It takes as input a MetaImage file (.mhd + .raw). To run the script, execute the following command in the terminal: 
+This script takes as input the raw CT image and outputs the distance field based on the extracted boundary. It takes as input a MetaImage file (.mhd + .raw). To run the script, execute the following command in the terminal:
 
-`python bd_extraction.py [Path to .mhd file]` 
+`python bd_extraction.py [Path to .mhd file]`
 
 This will store the computed distance field in MetaImage format (.mhd + .raw) in the 'Outputs' folder in the repository.
 
-#### downsample_skimage.py 
+#### downsample_skimage.py
 
-This script is a useful downsampling routine if the original CT image doesn't fit in memory for the MS-Complex computation. It takes as input the raw CT image and downsamples it based on the given factor. It takes as input a MetaImage file (.mhd + .raw). To run the script, execute the following command in the terminal: 
+This script is a useful downsampling routine if the original CT image doesn't fit in memory for the MS-Complex computation. It takes as input the raw CT image and downsamples it based on the given factor. It takes as input a MetaImage file (.mhd + .raw). To run the script, execute the following command in the terminal:
 
-`python bd_extraction.py [Path to .mhd file] [factor]` 
+`python bd_extraction.py [Path to .mhd file] [factor]`
 
 This will store the downsampled CT image in MetaImage format (.mhd + .raw) in the 'Outputs' folder in the repository.
 
-#### main.py 
+#### main.py
 
-This script is the main interface to run the Morse-Smale Complex computation and extract relevant geometric and topological structures for analysis. It takes the computed distance field as input and returns the structures selected from the in-program menu. The program allows for the visualization of the persistence curve, computation/simplification of the MS-Complex and extraction of the segmentation, connectivity network and contact regions in the granular material packing.  
+This script is the main interface to run the Morse-Smale Complex computation and extract relevant geometric and topological structures for analysis. It takes the computed distance field as input and returns the structures selected from the in-program menu. The program allows for the visualization of the persistence curve, computation/simplification of the MS-Complex and extraction of the segmentation, connectivity network and contact regions in the granular material packing.
 
-`python main.py [Path to .raw file of distance field] [dimension 1] [dimension 2] [dimension 3]` 
+`python main.py [Path to .raw file of distance field] [dimension 1] [dimension 2] [dimension 3]`
 
 Running this will store the selected structures in '.vtp' format (accessible through VTK/ParaView) in the 'Outputs' folder in the repository.
 
